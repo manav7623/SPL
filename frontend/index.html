@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPL 2026 Player Registration</title>
+  <meta name="description" content="Register for the SPL 2026 Cricket Tournament. Fast, mobile-friendly registration and secure payment gateway.">
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="style.css">
+  <!-- FontAwesome for Premium Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Tournament Banner -->
+    <header class="spl-banner" id="banner">
+      <div class="spl-logo text-gradient">SPL 2026</div>
+      <p class="spl-tagline">Shampara Premier League - Season 5 Tournament Registration</p>
+      
+      <div class="tournament-badges">
+        <div class="badge">
+          <i class="fa-regular fa-calendar-days"></i>
+          <span>Oct 15 - Oct 18, 2026</span>
+        </div>
+        <div class="badge">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <span>SPL Cricket Arena, RJK</span>
+        </div>
+        <div class="badge">
+          <i class="fa-solid fa-indian-rupee-sign"></i>
+          <span>₹500 / Player</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Registration Section -->
+    <main>
+      
+      <!-- Registration Confirmation (Hidden by default, shown after success) -->
+      <section id="confirmation-section" class="card confirmation-card" style="display: none;">
+        <div class="modal-logo">
+          <i class="fa-solid fa-circle-check" style="color: var(--primary);"></i>
+        </div>
+        <h2 class="text-gradient">Registration Confirmed!</h2>
+        <p>Congratulations, you are now officially registered for SPL 2026.</p>
+        
+        <div class="reg-id-badge" id="confirmed-reg-id">SPL2026-1001</div>
+        
+        <div class="card" style="background: rgba(7, 15, 11, 0.4); text-align: left; padding: 20px; margin-top: 20px;">
+          <h3 style="margin-bottom: 15px; font-size: 1.1rem; color: var(--accent);">Player Credentials</h3>
+          <ul class="details-list">
+            <li class="details-item">
+              <span class="details-label">Registered Name</span>
+              <span class="details-value" id="conf-name">John Doe</span>
+            </li>
+            <li class="details-item">
+              <span class="details-label">Mobile Number</span>
+              <span class="details-value" id="conf-mobile">+91 9999999999</span>
+            </li>
+            <li class="details-item">
+              <span class="details-label">Playing Role</span>
+              <span class="details-value" id="conf-role">All-rounder</span>
+            </li>
+            <li class="details-item">
+              <span class="details-label">T-Shirt Details</span>
+              <span class="details-value" id="conf-tshirt">Size L (#7 - MSD)</span>
+            </li>
+            <li class="details-item">
+              <span class="details-label">Amount Paid</span>
+              <span class="details-value" style="color: var(--primary);">₹500.00 (Paid)</span>
+            </li>
+            <li class="details-item">
+              <span class="details-label">Razorpay Payment ID</span>
+              <span class="details-value" id="conf-pay-id">pay_mock_xyz</span>
+            </li>
+          </ul>
+        </div>
+        
+        <p style="color: var(--text-gray); font-size: 0.9rem; margin-top: 20px;">
+          Please take a screenshot of this confirmation for your records. A verification message has been logged in our system.
+        </p>
+        
+        <button class="btn btn-accent" style="margin-top: 25px; max-width: 250px;" onclick="window.location.reload();">
+          <i class="fa-solid fa-arrow-left"></i> Register Another Player
+        </button>
+      </section>
+
+      <!-- Registration Form Card -->
+      <section id="form-section" class="card">
+        <h2 class="card-title"><i class="fa-solid fa-clipboard-user"></i> Player Registration</h2>
+        
+        <form id="registration-form" novalidate>
+          
+          <!-- Full Name -->
+          <div class="form-group" id="group-name">
+            <label for="name" class="form-label">Full Name *</label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="Enter your full name" required>
+            <div class="invalid-feedback">Please enter your full name.</div>
+          </div>
+
+          <!-- Mobile Number -->
+          <div class="form-group" id="group-mobile">
+            <label for="mobile" class="form-label">Mobile / Contact Number *</label>
+            <input type="tel" id="mobile" name="mobile" class="form-control" placeholder="Enter 10-digit mobile number" pattern="[0-9]{10}" required>
+            <div class="invalid-feedback">Please enter a valid 10-digit mobile number.</div>
+          </div>
+
+          <!-- Playing Role Grid -->
+          <div class="form-group" id="group-playing_role">
+            <label class="form-label">Playing Role *</label>
+            <div class="radio-grid">
+              <label class="radio-card">
+                <input type="radio" name="playing_role" value="Batsman" required>
+                <div class="radio-card-content">
+                  <i class="fa-solid fa-baseball-bat-ball"></i>
+                  <span>Batsman</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="playing_role" value="Bowler">
+                <div class="radio-card-content">
+                  <i class="fa-solid fa-baseball"></i>
+                  <span>Bowler</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="playing_role" value="All-rounder">
+                <div class="radio-card-content">
+                  <i class="fa-solid fa-arrows-spin"></i>
+                  <span>All-rounder</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="playing_role" value="Wicket Keeper/Batsman">
+                <div class="radio-card-content">
+                  <i class="fa-solid fa-hand-holding-box"></i>
+                  <span>WK / Batsman</span>
+                </div>
+              </label>
+            </div>
+            <div class="invalid-feedback" style="margin-top: 10px;">Please select your playing role.</div>
+          </div>
+
+          <!-- T-Shirt Size Grid -->
+          <div class="form-group" id="group-tshirt_size">
+            <label class="form-label">T-Shirt Size *</label>
+            <div class="radio-grid">
+              <label class="radio-card">
+                <input type="radio" name="tshirt_size" value="S" required>
+                <div class="radio-card-content">
+                  <span>S</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="tshirt_size" value="M">
+                <div class="radio-card-content">
+                  <span>M</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="tshirt_size" value="L">
+                <div class="radio-card-content">
+                  <span>L</span>
+                </div>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="tshirt_size" value="XL">
+                <div class="radio-card-content">
+                  <span>XL</span>
+                </div>
+              </label>
+              <label class="radio-card" style="grid-column: span 4 / span 4; max-width: 25%; margin: 0 auto; min-width: 80px;">
+                <input type="radio" name="tshirt_size" value="XXL">
+                <div class="radio-card-content">
+                  <span>XXL</span>
+                </div>
+              </label>
+            </div>
+            <div class="invalid-feedback" style="margin-top: 10px;">Please select your T-shirt size.</div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <!-- T-Shirt Number -->
+            <div class="form-group" id="group-tshirt_number">
+              <label for="tshirt_number" class="form-label">T-Shirt Number *</label>
+              <input type="number" id="tshirt_number" name="tshirt_number" class="form-control" placeholder="e.g. 7" min="0" max="999" required>
+              <div class="invalid-feedback">Enter number (0-999).</div>
+            </div>
+
+            <!-- T-Shirt Name -->
+            <div class="form-group" id="group-tshirt_name">
+              <label for="tshirt_name" class="form-label">T-Shirt Name *</label>
+              <input type="text" id="tshirt_name" name="tshirt_name" class="form-control" placeholder="e.g. DHONI" required>
+              <div class="invalid-feedback">Enter back-print name.</div>
+            </div>
+          </div>
+
+          <!-- Price Breakup Card -->
+          <div class="card" style="background: rgba(7, 15, 11, 0.5); padding: 20px; border-color: rgba(255, 215, 0, 0.2); margin-top: 10px; margin-bottom: 30px;">
+            <ul class="details-list">
+              <li class="details-item" style="padding-top: 0;">
+                <span class="details-label">SPL Player Registration Fee</span>
+                <span class="details-value">₹500.00</span>
+              </li>
+              <li class="details-item">
+                <span class="details-label">Customized Player Kit (T-Shirt)</span>
+                <span class="details-value" style="color: var(--primary);">FREE / Included</span>
+              </li>
+              <li class="details-item" style="padding-bottom: 0; border: none; font-size: 1.15rem; font-weight: 700;">
+                <span class="details-label" style="color: var(--text-white);">Total Payable</span>
+                <span class="details-value text-gold">₹500.00</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn btn-primary" id="submit-btn">
+            <i class="fa-solid fa-credit-card"></i> Pay ₹500 & Register
+          </button>
+          
+        </form>
+      </section>
+
+      <!-- Rules and Regulations Accordion -->
+      <section class="card">
+        <h2 class="card-title"><i class="fa-solid fa-gavel"></i> Tournament Information & Rules</h2>
+        
+        <div class="accordion active">
+          <div class="accordion-header">
+            <span>1. Schedule & Venue</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>The SPL 2026 Season 5 will take place from October 15 to October 18, 2026 at the state-of-the-art SPL Cricket Arena. Matches will start daily at 8:00 AM under ICC-standard T20 guidelines with professional white leather balls.</p>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header">
+            <span>2. Registration Guidelines</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>Registration fee is ₹500 per player. This includes the entry fee, match refreshments, and a custom tournament dry-fit T-shirt branded with your preferred name and number. Payments are processed securely via Razorpay UPI, cards, and Net Banking.</p>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header">
+            <span>3. Squad and Kit Selection</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>All registered players will be placed in the auction pool. Playing role and T-shirt size options cannot be altered after registration is completed, so please double-check your T-shirt size (S, M, L, XL, XXL) and role.</p>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header">
+            <span>4. Code of Conduct</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="accordion-content">
+            <p>All players must adhere to strictly fair play regulations. Standard ICC rules govern all matches, with qualified, independent local umpires. Decision of the tournament committee remains final and binding.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gallery Section -->
+      <section class="card">
+        <h2 class="card-title"><i class="fa-solid fa-images"></i> SPL Photo Gallery</h2>
+        <div class="gallery-grid">
+          <div class="gallery-item">
+            <img src="assets/gallery1.jpg" alt="Batsman hitting shot">
+            <div class="gallery-overlay">
+              <span class="gallery-text">Vibrant Cricket Action</span>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img src="assets/gallery2.jpg" alt="Team celebrating victory">
+            <div class="gallery-overlay">
+              <span class="gallery-text">Champions Celebration</span>
+            </div>
+          </div>
+          <div class="gallery-item">
+            <img src="assets/gallery3.jpg" alt="Cricket Stadium under lights">
+            <div class="gallery-overlay">
+              <span class="gallery-text">Under the Stadium Lights</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Committee Members Section -->
+      <section class="card">
+        <h2 class="card-title"><i class="fa-solid fa-users-gear"></i> SPL Organizing Committee</h2>
+        <div class="contact-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+          <!-- Member 1 -->
+          <div style="background: rgba(7, 15, 11, 0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; text-align: center; transition: var(--transition);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <img src="assets/committee1.jpg" alt="Mr. Kirit Patel" style="width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--accent); object-fit: cover; margin-bottom: 15px; box-shadow: 0 0 15px var(--accent-glow);">
+            <h3 style="font-size: 1.15rem; font-family: var(--font-heading); margin-bottom: 5px; color: var(--text-white);">Mr. Kirit Patel</h3>
+            <p style="color: var(--primary); font-size: 0.9rem; font-weight: 600;">Chairman, SPL</p>
+          </div>
+          <!-- Member 2 -->
+          <div style="background: rgba(7, 15, 11, 0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; text-align: center; transition: var(--transition);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <img src="assets/committee2.jpg" alt="Mrs. Rupa Shah" style="width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--accent); object-fit: cover; margin-bottom: 15px; box-shadow: 0 0 15px var(--accent-glow);">
+            <h3 style="font-size: 1.15rem; font-family: var(--font-heading); margin-bottom: 5px; color: var(--text-white);">Mrs. Rupa Shah</h3>
+            <p style="color: var(--primary); font-size: 0.9rem; font-weight: 600;">Tournament Director</p>
+          </div>
+          <!-- Member 3 -->
+          <div style="background: rgba(7, 15, 11, 0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; text-align: center; transition: var(--transition);" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border-color)'">
+            <img src="assets/committee3.jpg" alt="Mr. Amit Mehta" style="width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--accent); object-fit: cover; margin-bottom: 15px; box-shadow: 0 0 15px var(--accent-glow);">
+            <h3 style="font-size: 1.15rem; font-family: var(--font-heading); margin-bottom: 5px; color: var(--text-white);">Mr. Amit Mehta</h3>
+            <p style="color: var(--primary); font-size: 0.9rem; font-weight: 600;">Head of IT & Operations</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact Info Section -->
+      <section class="card">
+        <h2 class="card-title"><i class="fa-solid fa-address-book"></i> Contact SPL Organizers</h2>
+        <div class="contact-grid">
+          <div>
+            <ul class="contact-info-list">
+              <li class="contact-info-item">
+                <div class="contact-info-icon"><i class="fa-solid fa-phone"></i></div>
+                <div class="contact-info-text">
+                  <h4>Registration Helpline</h4>
+                  <p>+91 98765 43210 (9 AM - 6 PM)</p>
+                </div>
+              </li>
+              <li class="contact-info-item">
+                <div class="contact-info-icon"><i class="fa-solid fa-envelope"></i></div>
+                <div class="contact-info-text">
+                  <h4>Official Email Support</h4>
+                  <p>support@shamparapremierleague.com</p>
+                </div>
+              </li>
+              <li class="contact-info-item">
+                <div class="contact-info-icon"><i class="fa-solid fa-location-dot"></i></div>
+                <div class="contact-info-text">
+                  <h4>SPL Cricket Complex</h4>
+                  <p>Opp. Sports Club, University Road, Rajkot, Gujarat</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div style="background: rgba(7, 15, 11, 0.5); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 25px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <i class="fa-solid fa-map-location-dot" style="font-size: 3rem; color: var(--accent); margin-bottom: 15px;"></i>
+            <h4 style="margin-bottom: 5px;">Need Location Map?</h4>
+            <p style="color: var(--text-gray); font-size: 0.9rem; max-width: 250px;">Use Google Maps to navigate to the Shampara Premier League Arena.</p>
+            <a href="https://maps.google.com" target="_blank" class="btn btn-accent btn-mini" style="margin-top: 15px; width: auto;">Open Maps</a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="spl-footer">
+      <p>&copy; 2026 Shampara Premier League (SPL). All Rights Reserved.</p>
+      <p style="margin-top: 5px; font-size: 0.8rem;">Developed by SPL IT Operations Team.</p>
+    </footer>
+
+  </div>
+
+  <!-- Toast Notification Wrapper -->
+  <div id="toast-wrapper" class="toast-notification">
+    <i class="fa-solid fa-circle-exclamation" id="toast-icon"></i>
+    <span id="toast-message">Notification details...</span>
+  </div>
+
+  <!-- Developer Mock Payment Gateway Modal -->
+  <div id="mock-payment-backdrop" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-logo">
+        <i class="fa-solid fa-cash-register"></i>
+      </div>
+      <h2 style="color: var(--accent); font-family: var(--font-heading); margin-bottom: 10px;">Razorpay Mock Payment</h2>
+      <p style="color: var(--text-gray); font-size: 0.95rem; margin-bottom: 20px;">
+        The system is running in <strong style="color: var(--primary);">Developer Mock Mode</strong>. Select your payment outcome below to simulate the Razorpay transaction response.
+      </p>
+      
+      <div class="card" style="background: rgba(7, 15, 11, 0.5); text-align: left; padding: 15px; margin-bottom: 20px; border-color: rgba(255,215,0,0.15);">
+        <p style="font-size: 0.9rem; margin-bottom: 5px;"><strong>Order ID:</strong> <span id="mock-order-id" style="color: var(--accent);">order_mock_12345</span></p>
+        <p style="font-size: 0.9rem;"><strong>Amount Payable:</strong> <span style="color: var(--primary);">₹500.00</span></p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <button class="btn btn-primary" id="mock-pay-success">
+          <i class="fa-solid fa-check"></i> Success
+        </button>
+        <button class="btn btn-primary" style="background: linear-gradient(135deg, var(--error) 0%, #b30000 100%); color: white;" id="mock-pay-fail">
+          <i class="fa-solid fa-xmark"></i> Decline
+        </button>
+      </div>
+      
+      <button class="btn btn-accent btn-mini" style="margin-top: 20px; background: transparent; border: 1px solid var(--text-muted); color: var(--text-gray);" id="mock-pay-cancel">
+        Cancel Checkout
+      </button>
+    </div>
+  </div>
+
+  <!-- Razorpay Checkout Integration Script -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <!-- Client Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
