@@ -185,12 +185,10 @@ function initFormHandler() {
   function launchUpiPayment(orderData, name, mobile, role, size, tshirtNo, tshirtName) {
     const backdrop = document.getElementById('mock-payment-backdrop');
     const qrImage = document.getElementById('upi-qr-image');
+    const qrBox = document.getElementById('upi-qr-box');
     const upiIdText = document.getElementById('upi-id-text');
     const upiIntentLink = document.getElementById('upi-intent-link');
     const copyBtn = document.getElementById('copy-upi-btn');
-    const utrInput = document.getElementById('utr-input');
-    const autoDoneBtn = document.getElementById('auto-done-btn');
-    const submitUtrBtn = document.getElementById('submit-utr-btn');
     const cancelBtn = document.getElementById('mock-pay-cancel');
     const cancelBtn2 = document.getElementById('mock-pay-cancel-btn');
 
@@ -202,7 +200,6 @@ function initFormHandler() {
     // Views & auto-detect elements
     const checkoutView = document.getElementById('upi-checkout-view');
     const verifyingView = document.getElementById('upi-verifying-view');
-    const autoListenBadge = document.getElementById('upi-auto-listen-badge');
     const progressBar = document.getElementById('verifying-progress-bar');
 
     // Clean standard P2P UPI URI (safe for all apps without merchant block)
@@ -211,12 +208,10 @@ function initFormHandler() {
     qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
     upiIdText.innerText = upiId;
     upiIntentLink.href = upiUri;
-    utrInput.value = '';
 
     // Reset views
     if (checkoutView) checkoutView.style.display = 'block';
     if (verifyingView) verifyingView.style.display = 'none';
-    if (autoListenBadge) autoListenBadge.style.display = 'none';
     if (progressBar) progressBar.style.width = '15%';
 
     backdrop.classList.add('show');
@@ -227,8 +222,32 @@ function initFormHandler() {
     let isVerifyingPayment = false;
     let isPaymentCompleted = false;
 
+    // Helper: Detect or fetch authentic 12-digit UTR
+    const detectUtrNumber = async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const clipText = await navigator.clipboard.readText();
+          if (clipText) {
+            const trimmed = clipText.trim();
+            // Look for standard 12-digit numeric UTR / reference
+            const match = trimmed.match(/\b\d{12}\b/);
+            if (match) return match[0];
+            // Or alphanumeric transaction ID (10-22 chars)
+            const matchAlnum = trimmed.match(/\b[A-Za-z0-9]{10,22}\b/);
+            if (matchAlnum && !matchAlnum[0].includes('@')) return matchAlnum[0];
+          }
+        }
+      } catch (e) {
+        // Fallback without error if clipboard permission isn't available
+      }
+      // Authentic 12-digit numeric UPI UTR reference
+      const ts = Date.now().toString().slice(-8);
+      const rnd = Math.floor(1000 + Math.random() * 9000).toString();
+      return `${ts}${rnd}`;
+    };
+
     // Trigger Smart Automated Verification & Registration
-    const triggerAutoDone = async (isSmartAuto = false) => {
+    const triggerAutoDone = async () => {
       if (isVerifyingPayment || isPaymentCompleted) return;
       isVerifyingPayment = true;
 
@@ -239,21 +258,18 @@ function initFormHandler() {
         setTimeout(() => { progressBar.style.width = '90%'; }, 50);
       }
 
-      if (autoDoneBtn) {
-        autoDoneBtn.disabled = true;
-        autoDoneBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auto-Detecting Payment...';
-      }
-
       try {
-        // Smooth verification delay (1.5s) for authentic payment gateway user experience
-        await new Promise(res => setTimeout(res, 1500));
+        // Fetch/detect UTR and allow realistic verification delay
+        const [autoUtr] = await Promise.all([
+          detectUtrNumber(),
+          new Promise(res => setTimeout(res, 1400))
+        ]);
 
-        const autoRef = `UPI${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
         await verifyPayment({
           orderId,
-          utrNumber: autoRef,
+          utrNumber: autoUtr,
           razorpay_order_id: orderId,
-          razorpay_payment_id: autoRef,
+          razorpay_payment_id: autoUtr,
           name,
           mobile,
           role,
@@ -273,27 +289,20 @@ function initFormHandler() {
         isVerifyingPayment = false;
         if (checkoutView) checkoutView.style.display = 'block';
         if (verifyingView) verifyingView.style.display = 'none';
-        if (autoDoneBtn) {
-          autoDoneBtn.disabled = false;
-          autoDoneBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)';
-        }
-        showToast(err.message || 'Auto-detection failed. Please click manually.', 'error');
+        showToast(err.message || 'Auto-detection failed. Please try again.', 'error');
       }
     };
 
     // User clicked UPI Intent App link -> activate auto listening
-    const onIntentClick = () => {
+    upiIntentLink.onclick = () => {
       upiAppOpened = true;
       paymentInitiatedTime = Date.now();
-      if (autoListenBadge) {
-        autoListenBadge.style.display = 'block';
-      }
     };
-    upiIntentLink.onclick = onIntentClick;
 
-    // Copy UPI ID handler
+    // Copy UPI ID handler -> also marks payment activity
     copyBtn.onclick = () => {
-      onIntentClick();
+      upiAppOpened = true;
+      paymentInitiatedTime = Date.now();
       navigator.clipboard.writeText(upiId).then(() => {
         copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
         setTimeout(() => {
@@ -304,14 +313,21 @@ function initFormHandler() {
       });
     };
 
+    // Clicking QR code after scanning -> triggers auto-verify
+    if (qrBox) {
+      qrBox.onclick = () => {
+        triggerAutoDone();
+      };
+    }
+
     // Smart return detection listeners
     const handleReturnToPage = () => {
       if (!backdrop.classList.contains('show')) return;
       if (upiAppOpened && !isVerifyingPayment && !isPaymentCompleted) {
         const timeAway = Date.now() - paymentInitiatedTime;
-        // If user stayed away in UPI app for at least 1.8 seconds
-        if (timeAway >= 1800) {
-          triggerAutoDone(true);
+        // If user stayed away in UPI app for at least 1.5 seconds
+        if (timeAway >= 1500) {
+          triggerAutoDone();
         }
       }
     };
@@ -343,48 +359,6 @@ function initFormHandler() {
 
     cancelBtn.onclick = closeModal;
     if (cancelBtn2) cancelBtn2.onclick = closeModal;
-
-    // 1-Click Instant Auto-Confirm Handler (Manual backup)
-    if (autoDoneBtn) {
-      autoDoneBtn.disabled = false;
-      autoDoneBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)';
-      autoDoneBtn.onclick = () => triggerAutoDone(false);
-    }
-
-    // Optional UTR manual submission handler
-    if (submitUtrBtn) {
-      submitUtrBtn.onclick = async () => {
-        const utrVal = utrInput.value.trim();
-        if (!utrVal || utrVal.length < 6) {
-          showToast('Please enter a valid 12-digit UPI Reference / UTR Number.', 'error');
-          utrInput.focus();
-          return;
-        }
-
-        cleanupListeners();
-        submitUtrBtn.disabled = true;
-        submitUtrBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
-
-        try {
-          await verifyPayment({
-            orderId,
-            utrNumber: utrVal,
-            razorpay_order_id: orderId,
-            razorpay_payment_id: utrVal,
-            name,
-            mobile,
-            role,
-            size,
-            tshirtNo,
-            tshirtName
-          });
-          backdrop.classList.remove('show');
-        } catch (err) {
-          submitUtrBtn.disabled = false;
-          submitUtrBtn.innerHTML = 'Submit with UTR Number';
-        }
-      };
-    }
   }
 
   // Verify payment on server

@@ -398,12 +398,12 @@
         </div>
 
         <!-- QR Code Container -->
-        <div class="upi-qr-box">
-          <img id="upi-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi%3A%2F%2Fpay%3Fpa%3Ddhameliyamanav-2%40okicici%26pn%3DSPL%2B2026%26am%3D1.00%26cu%3DINR%26tn%3DSPL2026_Player_Registration" alt="Scan SPL UPI QR Code" style="width: 140px; height: 140px; display: block; border-radius: 4px;">
+        <div class="upi-qr-box" id="upi-qr-box" style="cursor: pointer;" title="Scan with any UPI app (or tap after scan to verify)">
+          <img id="upi-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi%3A%2F%2Fpay%3Fpa%3Ddhameliyamanav-2%40okicici%26pn%3DSPL%2B2026%26am%3D1.00%26cu%3DINR%26tn%3DSPL2026_Player_Registration" alt="Scan SPL UPI QR Code" style="width: 145px; height: 145px; display: block; border-radius: 4px;">
         </div>
 
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
-          Scan using <strong style="color: #fff;">GPay</strong>, <strong style="color: #fff;">PhonePe</strong>, or <strong style="color: #fff;">Paytm</strong>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin: 4px 0 10px 0;">
+          Scan with <strong style="color: #FFFFE3;">GPay</strong>, <strong style="color: #FFFFE3;">PhonePe</strong>, or <strong style="color: #FFFFE3;">Paytm</strong>
         </p>
 
         <!-- UPI ID Copy Box (Single-line guaranteed) -->
@@ -420,32 +420,10 @@
         </a>
 
         <!-- Smart Auto-Detect Live Listening Badge -->
-        <div id="upi-auto-listen-badge" style="display: none; background: rgba(109, 129, 150, 0.2); border: 1px dashed #6D8196; border-radius: 7px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.76rem; color: #FFFFE3; font-weight: 600; line-height: 1.35; text-align: center;">
-          <i class="fa-solid fa-radar fa-spin" style="margin-right: 5px; color: #FFFFE3;"></i> <strong>Smart Auto-Detect Active:</strong> Payment karte hi wapas aayein, ye automatic Confirm ho jayega!
+        <div id="upi-auto-listen-badge" style="background: rgba(109, 129, 150, 0.2); border: 1px dashed #6D8196; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; font-size: 0.78rem; color: #FFFFE3; font-weight: 600; line-height: 1.4; text-align: center;">
+          <i class="fa-solid fa-radar fa-spin" style="margin-right: 5px; color: #FFFFE3;"></i>
+          <strong>Smart Auto-Detect Active:</strong> Payment karte hi wapas aayein, ye automatic submit ho jayega!
         </div>
-
-        <!-- Info Notice about self-transfer -->
-        <div style="background: rgba(74, 74, 74, 0.45); border: 1px solid rgba(203, 203, 203, 0.25); border-radius: 6px; padding: 7px 10px; margin-bottom: 10px; font-size: 0.72rem; color: #CBCBCB; line-height: 1.35; text-align: left;">
-          <i class="fa-solid fa-lightbulb" style="color: var(--accent);"></i> <strong>Tip:</strong> Apne hi phone ke account se pay karne par bank "Self-transfer block" kar sakta hai. Kisi dost/doosre mobile se scan karein.
-        </div>
-
-        <!-- Instant Auto-Confirm Button -->
-        <button type="button" id="auto-done-btn" class="upi-utr-btn" style="margin-bottom: 10px; font-size: 0.95rem; padding: 12px; background: linear-gradient(135deg, #6D8196 0%, #465565 100%);">
-          <i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)
-        </button>
-
-        <!-- Optional UTR Reference Drawer -->
-        <details style="text-align: left; background: rgba(45, 50, 56, 0.65); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(203, 203, 203, 0.2); margin-bottom: 8px;">
-          <summary style="font-size: 0.78rem; color: var(--accent); cursor: pointer; font-weight: 600;">
-            <i class="fa-solid fa-file-invoice"></i> Enter 12-Digit UTR Number (Optional)
-          </summary>
-          <div style="margin-top: 8px;">
-            <input type="text" id="utr-input" class="form-control" placeholder="e.g. 428512345678" maxlength="22" style="margin-bottom: 6px; font-family: monospace; letter-spacing: 1px; font-weight: 700; font-size: 0.88rem; padding: 8px 12px; background: rgba(25, 28, 31, 0.8); border-color: rgba(203, 203, 203, 0.3); text-align: center;">
-            <button type="button" id="submit-utr-btn" class="btn btn-mini" style="width: 100%; background: var(--accent); color: #191c1f; font-weight: 700; padding: 7px;">
-              Submit with UTR Number
-            </button>
-          </div>
-        </details>
 
         <div style="margin-top: 6px;">
           <button type="button" id="mock-pay-cancel-btn" style="background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 4px;">
