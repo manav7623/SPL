@@ -48,13 +48,57 @@ if (!useMockPayment) {
   console.log('Razorpay is running in DEVELOPER MOCK MODE. Real money will not be charged.');
 }
 
+// Admin Cryptographic Stateless Session Helper (Persists across serverless cold starts & reloads)
+const ADMIN_SECRET = process.env.SESSION_SECRET || 'spl_2026_super_secret_session_key';
+
+function generateAdminToken() {
+  const payload = {
+    isAdmin: true,
+    issuedAt: Date.now()
+  };
+  const payloadStr = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto.createHmac('sha256', ADMIN_SECRET).update(payloadStr).digest('base64url');
+  return `${payloadStr}.${signature}`;
+}
+
+function verifyAdminToken(token) {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+  const [payloadStr, signature] = parts;
+  try {
+    const expectedSignature = crypto.createHmac('sha256', ADMIN_SECRET).update(payloadStr).digest('base64url');
+    if (signature.length === expectedSignature.length && crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      const payload = JSON.parse(Buffer.from(payloadStr, 'base64url').toString('utf8'));
+      // Valid for 30 days
+      if (payload.isAdmin && (Date.now() - payload.issuedAt < 30 * 24 * 60 * 60 * 1000)) {
+        return true;
+      }
+    }
+  } catch (e) {
+    return false;
+  }
+  return false;
+}
+
 // Authentication Middleware
 function requireAdmin(req, res, next) {
+  // Check express-session
   if (req.session && req.session.isAdmin) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Unauthorized admin access.' });
+    return next();
   }
+
+  // Check header or query token
+  const token = req.headers['x-admin-token'] || 
+                (req.headers['authorization'] && req.headers['authorization'].replace(/^Bearer\s+/i, '')) ||
+                req.query.token;
+
+  if (verifyAdminToken(token)) {
+    if (req.session) req.session.isAdmin = true;
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Unauthorized admin access.' });
 }
 
 // ==========================================
@@ -158,8 +202,9 @@ app.post('/api/admin/login', (req, res) => {
   const expectedPass = process.env.ADMIN_PASSWORD || 'admin_spl_2026';
 
   if (username === expectedUser && password === expectedPass) {
-    req.session.isAdmin = true;
-    return res.json({ success: true, message: 'Logged in successfully.' });
+    if (req.session) req.session.isAdmin = true;
+    const token = generateAdminToken();
+    return res.json({ success: true, token, message: 'Logged in successfully.' });
   } else {
     return res.status(401).json({ success: false, error: 'Invalid username or password.' });
   }
@@ -169,19 +214,22 @@ app.post('/api/admin/login', (req, res) => {
  * Logout admin
  */
 app.post('/api/admin/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({ success: false, error: 'Could not log out.' });
-    }
-    return res.json({ success: true });
-  });
+  if (req.session) {
+    req.session.destroy(() => {});
+  }
+  return res.json({ success: true });
 });
 
 /**
  * Check admin authorization status
  */
 app.get('/api/admin/check-session', (req, res) => {
-  if (req.session && req.session.isAdmin) {
+  const token = req.headers['x-admin-token'] || 
+                (req.headers['authorization'] && req.headers['authorization'].replace(/^Bearer\s+/i, '')) ||
+                req.query.token;
+
+  if (verifyAdminToken(token) || (req.session && req.session.isAdmin)) {
+    if (req.session) req.session.isAdmin = true;
     return res.json({ authenticated: true });
   }
   return res.json({ authenticated: false });

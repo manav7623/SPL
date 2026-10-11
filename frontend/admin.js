@@ -4,6 +4,37 @@ let currentPage = 1;
 const limit = 10;
 let searchTimeout = null;
 
+// Token helpers for persistent authentication across page refreshes
+function getAdminToken() {
+  return localStorage.getItem('spl_admin_token') || '';
+}
+
+function setAdminToken(token) {
+  if (token) {
+    localStorage.setItem('spl_admin_token', token);
+  }
+}
+
+function clearAdminToken() {
+  localStorage.removeItem('spl_admin_token');
+}
+
+// Authenticated fetch wrapper that sends the token on all requests
+async function adminFetch(url, options = {}) {
+  const token = getAdminToken();
+  const headers = options.headers ? { ...options.headers } : {};
+  if (token) {
+    headers['x-admin-token'] = token;
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const response = await fetch(url, { ...options, credentials: 'include', headers });
+  if (response.status === 401) {
+    clearAdminToken();
+    showLogin();
+  }
+  return response;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   checkSession();
   initLoginHandler();
@@ -30,20 +61,32 @@ function showAdminToast(message, type = 'success') {
   }, 4000);
 }
 
-// Verification of active session
+// Verification of active session (Persists on Refresh)
 async function checkSession() {
+  const token = getAdminToken();
+
+  // If token is in localStorage, open dashboard immediately without asking for login!
+  if (token) {
+    showDashboard();
+  } else {
+    showLogin();
+  }
+
   try {
-    const res = await fetch('/api/admin/check-session');
+    const res = await adminFetch('/api/admin/check-session');
     const data = await res.json();
 
     if (data.authenticated) {
       showDashboard();
     } else {
+      clearAdminToken();
       showLogin();
     }
   } catch (error) {
     console.error('Session check failed:', error);
-    showLogin();
+    if (!token) {
+      showLogin();
+    }
   }
 }
 
@@ -91,6 +134,11 @@ function initLoginHandler() {
         throw new Error(data.error || 'Authentication failed');
       }
 
+      // Persist token for seamless auto-login on refresh
+      if (data.token) {
+        setAdminToken(data.token);
+      }
+
       showAdminToast('Welcome back, Admin.');
       showDashboard();
       
@@ -114,7 +162,7 @@ function loadDashboardData() {
 // Fetch general stats cards
 async function fetchStats() {
   try {
-    const res = await fetch('/api/admin/stats');
+    const res = await adminFetch('/api/admin/stats');
     if (!res.ok) throw new Error('Failed to retrieve statistics.');
     
     const stats = await res.json();
@@ -160,7 +208,7 @@ async function fetchPlayers() {
 
   try {
     const url = `/api/admin/players?search=${encodeURIComponent(searchVal)}&role=${roleVal}&status=${statusVal}&page=${currentPage}&limit=${limit}`;
-    const res = await fetch(url);
+    const res = await adminFetch(url);
     if (!res.ok) throw new Error('Failed to retrieve players.');
 
     const data = await res.json();
@@ -286,7 +334,7 @@ async function changePlayerStatus(id, newStatus) {
   }
 
   try {
-    const res = await fetch(`/api/admin/players/${id}/status`, {
+    const res = await adminFetch(`/api/admin/players/${id}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus })
@@ -395,22 +443,20 @@ function initDashboardControls() {
 
   // Excel Export download trigger
   exportBtn.addEventListener('click', () => {
-    // Standard window redirect triggers browser attachment download
-    window.location.href = '/api/admin/export';
+    const token = getAdminToken();
+    window.location.href = `/api/admin/export?token=${encodeURIComponent(token)}`;
   });
 
   // Logout listener
   logoutBtn.addEventListener('click', async () => {
     try {
-      const res = await fetch('/api/admin/logout', { method: 'POST' });
-      if (res.ok) {
-        showAdminToast('Signed out successfully.');
-        showLogin();
-      } else {
-        throw new Error('Sign out request failed.');
-      }
+      await adminFetch('/api/admin/logout', { method: 'POST' });
     } catch (error) {
-      showAdminToast(error.message, 'error');
+      console.error(error);
+    } finally {
+      clearAdminToken();
+      showAdminToast('Signed out successfully.');
+      showLogin();
     }
   });
 }
