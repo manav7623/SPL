@@ -265,8 +265,8 @@ async function fetchPlayers() {
         const safeUtr = escapeHtml(String(p.utr_number));
         utrDisplay = `
           <div style="display: inline-flex; align-items: center; gap: 5px;">
-            <span style="font-family: monospace; font-weight: 700; color: #38bdf8; font-size: 0.85rem; letter-spacing: 0.5px;">${safeUtr}</span>
-            <button type="button" title="Copy UTR" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; cursor: pointer;" onclick="copyUtrToClipboard('${safeUtr}')">
+            <span style="font-family: monospace; font-weight: 700; color: #FFFFE3; font-size: 0.85rem; letter-spacing: 0.5px;">${safeUtr}</span>
+            <button type="button" title="Copy UTR" style="background: rgba(109, 129, 150, 0.25); color: #FFFFE3; border: 1px solid rgba(109, 129, 150, 0.5); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; cursor: pointer;" onclick="copyUtrToClipboard('${safeUtr}')">
               <i class="fa-regular fa-copy"></i>
             </button>
           </div>
@@ -280,7 +280,7 @@ async function fetchPlayers() {
       if (paymentStatus === 'Paid') {
         actionButtons = `
           <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="color: #4ade80; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Verified</span>
+            <span style="color: #FFFFE3; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-circle-check" style="color: #6D8196;"></i> Verified</span>
             <button type="button" title="Reject / Revoke" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Failed')">
               <i class="fa-solid fa-ban"></i>
             </button>
@@ -289,7 +289,7 @@ async function fetchPlayers() {
       } else if (paymentStatus === 'Pending') {
         actionButtons = `
           <div style="display: flex; align-items: center; gap: 6px;">
-            <button type="button" style="padding: 4px 10px; font-size: 0.75rem; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Paid')">
+            <button type="button" style="padding: 4px 10px; font-size: 0.75rem; background: #6D8196; color: #FFFFE3; border: 1px solid rgba(255, 255, 227, 0.25); border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Paid')">
               <i class="fa-solid fa-check"></i> Approve
             </button>
             <button type="button" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Failed')">
@@ -300,7 +300,7 @@ async function fetchPlayers() {
       } else {
         // Failed
         actionButtons = `
-          <button type="button" style="padding: 4px 10px; font-size: 0.75rem; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Paid')">
+          <button type="button" style="padding: 4px 10px; font-size: 0.75rem; background: #6D8196; color: #FFFFE3; border: 1px solid rgba(255, 255, 227, 0.25); border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Paid')">
             <i class="fa-solid fa-check"></i> Approve
           </button>
         `;
@@ -338,7 +338,7 @@ async function fetchPlayers() {
         <td>${playerMobile}</td>
         <td><i class="fa-solid ${roleIcon}" style="margin-right: 5px; color: var(--primary);"></i> ${playingRole}</td>
         <td>
-          <span style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: var(--accent); margin-right: 5px;">${tshirtSize}</span>
+          <span style="background: rgba(255,255,227,0.12); border: 1px solid rgba(255,255,227,0.25); padding: 2px 6px; border-radius: 4px; font-weight: bold; color: var(--accent); margin-right: 5px;">${tshirtSize}</span>
           #${tshirtNo} &nbsp;<span style="color: var(--text-gray); font-style: italic;">"${tshirtName}"</span>
         </td>
         <td><span class="status-badge ${statusClass}">${escapeHtml(paymentStatus)}</span></td>
