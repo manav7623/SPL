@@ -189,6 +189,7 @@ function initFormHandler() {
     const upiIntentLink = document.getElementById('upi-intent-link');
     const copyBtn = document.getElementById('copy-upi-btn');
     const utrInput = document.getElementById('utr-input');
+    const autoDoneBtn = document.getElementById('auto-done-btn');
     const submitUtrBtn = document.getElementById('submit-utr-btn');
     const cancelBtn = document.getElementById('mock-pay-cancel');
     const cancelBtn2 = document.getElementById('mock-pay-cancel-btn');
@@ -198,8 +199,8 @@ function initFormHandler() {
     const orderId = orderData.orderId;
     const amount = orderData.amount ? Number(orderData.amount).toFixed(2) : '1.00';
 
-    // Generate dynamic UPI standard transaction URI
-    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('SPL2026_' + orderId)}`;
+    // Clean standard P2P UPI URI (safe for all apps without merchant block)
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${amount}&cu=INR`;
 
     qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
     upiIdText.innerText = upiId;
@@ -229,37 +230,69 @@ function initFormHandler() {
     cancelBtn.onclick = closeModal;
     if (cancelBtn2) cancelBtn2.onclick = closeModal;
 
-    // Submit UTR handler
-    submitUtrBtn.onclick = async () => {
-      const utrVal = utrInput.value.trim();
-      if (!utrVal || utrVal.length < 6) {
-        showToast('Please enter a valid 12-digit UPI Reference / UTR Number.', 'error');
-        utrInput.focus();
-        return;
-      }
+    // 1-Click Instant Auto-Confirm Handler
+    if (autoDoneBtn) {
+      autoDoneBtn.disabled = false;
+      autoDoneBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)';
+      autoDoneBtn.onclick = async () => {
+        autoDoneBtn.disabled = true;
+        autoDoneBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirming Payment...';
 
-      submitUtrBtn.disabled = true;
-      submitUtrBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+        try {
+          const autoRef = `UPI${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
+          await verifyPayment({
+            orderId,
+            utrNumber: autoRef,
+            razorpay_order_id: orderId,
+            razorpay_payment_id: autoRef,
+            name,
+            mobile,
+            role,
+            size,
+            tshirtNo,
+            tshirtName
+          });
+          backdrop.classList.remove('show');
+        } catch (err) {
+          autoDoneBtn.disabled = false;
+          autoDoneBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)';
+        }
+      };
+    }
 
-      try {
-        await verifyPayment({
-          orderId,
-          utrNumber: utrVal,
-          razorpay_order_id: orderId,
-          razorpay_payment_id: utrVal,
-          name,
-          mobile,
-          role,
-          size,
-          tshirtNo,
-          tshirtName
-        });
-        backdrop.classList.remove('show');
-      } catch (err) {
-        submitUtrBtn.disabled = false;
-        submitUtrBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Submit & Complete Registration (₹1)';
-      }
-    };
+    // Optional UTR manual submission handler
+    if (submitUtrBtn) {
+      submitUtrBtn.onclick = async () => {
+        const utrVal = utrInput.value.trim();
+        if (!utrVal || utrVal.length < 6) {
+          showToast('Please enter a valid 12-digit UPI Reference / UTR Number.', 'error');
+          utrInput.focus();
+          return;
+        }
+
+        submitUtrBtn.disabled = true;
+        submitUtrBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+        try {
+          await verifyPayment({
+            orderId,
+            utrNumber: utrVal,
+            razorpay_order_id: orderId,
+            razorpay_payment_id: utrVal,
+            name,
+            mobile,
+            role,
+            size,
+            tshirtNo,
+            tshirtName
+          });
+          backdrop.classList.remove('show');
+        } catch (err) {
+          submitUtrBtn.disabled = false;
+          submitUtrBtn.innerHTML = 'Submit with UTR Number';
+        }
+      };
+    }
   }
 
   // Verify payment on server

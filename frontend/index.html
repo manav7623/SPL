@@ -417,23 +417,30 @@
         <i class="fa-solid fa-bolt"></i> Open in GPay / PhonePe / Paytm
       </a>
 
-      <!-- 12-Digit UTR Input Form -->
-      <div class="upi-utr-section">
-        <label for="utr-input" style="font-size: 0.82rem; font-weight: 700; color: #ffffff; display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px;">
-          <span>Enter 12-Digit UTR / Ref No *</span>
-          <span style="font-size: 0.72rem; color: var(--accent); font-weight: normal;">(After payment)</span>
-        </label>
-        <input type="text" id="utr-input" class="form-control" placeholder="e.g. 428512345678" maxlength="22" style="margin-bottom: 6px; font-family: monospace; letter-spacing: 1px; font-weight: 700; font-size: 0.95rem; padding: 10px 12px; background: rgba(0,0,0,0.6); border-color: rgba(255,215,0,0.3); text-align: center;">
-        <p style="font-size: 0.72rem; color: var(--text-gray); margin-bottom: 10px; line-height: 1.35;">
-          <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> GPay/PhonePe receipt me <strong>"UPI Transaction ID"</strong> ya <strong>"UTR"</strong> likha hota hai.
-        </p>
-
-        <button type="button" id="submit-utr-btn" class="upi-utr-btn">
-          <i class="fa-solid fa-circle-check"></i> Submit & Complete Registration (₹1)
-        </button>
+      <!-- Info Notice about self-transfer -->
+      <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 7px 10px; margin-bottom: 10px; font-size: 0.72rem; color: #fcd34d; line-height: 1.35; text-align: left;">
+        <i class="fa-solid fa-lightbulb" style="color: var(--accent);"></i> <strong>Tip:</strong> Apne hi phone ke account se pay karne par bank "Self-transfer block" kar sakta hai. Kisi dost/doosre mobile se scan karein.
       </div>
 
-      <div style="margin-top: 8px;">
+      <!-- Instant Auto-Confirm Button -->
+      <button type="button" id="auto-done-btn" class="upi-utr-btn" style="margin-bottom: 10px; font-size: 0.95rem; padding: 12px; background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
+        <i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)
+      </button>
+
+      <!-- Optional UTR Reference Drawer -->
+      <details style="text-align: left; background: rgba(10, 24, 18, 0.6); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.2); margin-bottom: 8px;">
+        <summary style="font-size: 0.78rem; color: var(--accent); cursor: pointer; font-weight: 600;">
+          <i class="fa-solid fa-file-invoice"></i> Enter 12-Digit UTR Number (Optional)
+        </summary>
+        <div style="margin-top: 8px;">
+          <input type="text" id="utr-input" class="form-control" placeholder="e.g. 428512345678" maxlength="22" style="margin-bottom: 6px; font-family: monospace; letter-spacing: 1px; font-weight: 700; font-size: 0.88rem; padding: 8px 12px; background: rgba(0,0,0,0.6); border-color: rgba(255,215,0,0.3); text-align: center;">
+          <button type="button" id="submit-utr-btn" class="btn btn-mini" style="width: 100%; background: var(--accent); color: #000; font-weight: 700; padding: 7px;">
+            Submit with UTR Number
+          </button>
+        </div>
+      </details>
+
+      <div style="margin-top: 6px;">
         <button type="button" id="mock-pay-cancel-btn" style="background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 4px;">
           Cancel & Edit Details
         </button>
