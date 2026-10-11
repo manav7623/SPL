@@ -82,7 +82,7 @@ async function createRegistration({
   tshirt_size,
   tshirt_number,
   tshirt_name,
-  amount = 500.0,
+  amount = 1.0,
   razorpay_order_id
 }) {
   const [result] = await pool.execute(

@@ -178,7 +178,7 @@ function initFormHandler() {
 
   function resetSubmitButton() {
     submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay ₹500 & Register';
+    submitBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay ₹1 & Register';
   }
 
   // Launch Direct UPI Payment Gateway Dialog
@@ -196,11 +196,12 @@ function initFormHandler() {
     const upiId = orderData.upiId || 'dhameliyamanav-2@okicici';
     const upiName = orderData.upiName || 'SPL 2026';
     const orderId = orderData.orderId;
+    const amount = orderData.amount ? Number(orderData.amount).toFixed(2) : '1.00';
 
     // Generate dynamic UPI standard transaction URI
-    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=500.00&cu=INR&tn=${encodeURIComponent('SPL2026_' + orderId)}`;
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${amount}&cu=INR&tn=${encodeURIComponent('SPL2026_' + orderId)}`;
 
-    qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
+    qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUri)}`;
     upiIdText.innerText = upiId;
     upiIntentLink.href = upiUri;
     utrInput.value = '';
@@ -256,7 +257,7 @@ function initFormHandler() {
         backdrop.classList.remove('show');
       } catch (err) {
         submitUtrBtn.disabled = false;
-        submitUtrBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Submit & Complete Registration';
+        submitUtrBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Submit & Complete Registration (₹1)';
       }
     };
   }

@@ -88,7 +88,7 @@ app.post('/api/register/order', async (req, res) => {
       return res.status(400).json({ error: 'T-shirt number must be between 0 and 999' });
     }
 
-    const registrationFee = 500.0; // ₹500
+    const registrationFee = 1.0; // ₹1 for testing
     const orderId = `order_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
     // Save pending registration in database
@@ -257,7 +257,7 @@ app.get('/api/admin/export', requireAdmin, async (req, res) => {
         tshirt_size: 'L',
         tshirt_number: '7',
         tshirt_name: 'DHONI',
-        amount: 500.0,
+        amount: 1.0,
         utr_number: 'N/A',
         payment_status: 'Paid',
         razorpay_payment_id: 'pay_mock_12345',
