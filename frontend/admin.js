@@ -146,7 +146,7 @@ async function fetchPlayers() {
   // Show table loader
   tbody.innerHTML = `
     <tr>
-      <td colspan="8" style="text-align: center; padding: 40px;">
+      <td colspan="9" style="text-align: center; padding: 40px;">
         <div class="spinner-container">
           <div class="spinner"></div>
         </div>
@@ -168,7 +168,7 @@ async function fetchPlayers() {
     if (data.players.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-gray);">
+          <td colspan="9" style="text-align: center; padding: 40px; color: var(--text-gray);">
             <i class="fa-solid fa-folder-open" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
             No registration records found matching the current search parameters.
           </td>
@@ -188,8 +188,53 @@ async function fetchPlayers() {
       if (p.payment_status === 'Failed') statusClass = 'failed';
 
       const regId = p.registration_id || '<span style="color: var(--text-muted); font-size: 0.8rem;">PENDING PAYMENT</span>';
-      const payId = p.razorpay_payment_id || '<span style="color: var(--text-muted);">—</span>';
       
+      // UTR / Payment ID display
+      let utrDisplay = '<span style="color: var(--text-muted);">—</span>';
+      if (p.utr_number) {
+        utrDisplay = `
+          <div style="display: inline-flex; align-items: center; gap: 5px;">
+            <span style="font-family: monospace; font-weight: 700; color: #38bdf8; font-size: 0.85rem; letter-spacing: 0.5px;">${escapeHtml(p.utr_number)}</span>
+            <button type="button" title="Copy UTR" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; cursor: pointer;" onclick="navigator.clipboard.writeText('${escapeHtml(p.utr_number)}'); showAdminToast('UTR copied to clipboard!');">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        `;
+      } else if (p.razorpay_payment_id) {
+        utrDisplay = `<span style="font-family: monospace; font-size: 0.85rem; color: var(--text-gray);">${escapeHtml(p.razorpay_payment_id)}</span>`;
+      }
+      
+      // Action buttons (Approve / Reject)
+      let actionButtons = '';
+      if (p.payment_status === 'Paid') {
+        actionButtons = `
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="color: #4ade80; font-size: 0.8rem; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Verified</span>
+            <button type="button" title="Reject / Revoke" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Failed')">
+              <i class="fa-solid fa-ban"></i>
+            </button>
+          </div>
+        `;
+      } else if (p.payment_status === 'Pending') {
+        actionButtons = `
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button type="button" style="padding: 4px 10px; font-size: 0.75rem; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Paid')">
+              <i class="fa-solid fa-check"></i> Approve
+            </button>
+            <button type="button" style="padding: 4px 8px; font-size: 0.75rem; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 4px; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Failed')">
+              <i class="fa-solid fa-xmark"></i> Reject
+            </button>
+          </div>
+        `;
+      } else {
+        // Failed
+        actionButtons = `
+          <button type="button" style="padding: 4px 10px; font-size: 0.75rem; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer;" onclick="changePlayerStatus(${p.id}, 'Paid')">
+            <i class="fa-solid fa-check"></i> Approve
+          </button>
+        `;
+      }
+
       // Date formatting for Indian timezone
       const regDate = new Date(p.created_at).toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
@@ -207,8 +252,9 @@ async function fetchPlayers() {
           #${p.tshirt_number} &nbsp;<span style="color: var(--text-gray); font-style: italic;">"${escapeHtml(p.tshirt_name)}"</span>
         </td>
         <td><span class="status-badge ${statusClass}">${p.payment_status}</span></td>
-        <td style="font-family: monospace; font-size: 0.85rem;">${payId}</td>
+        <td>${utrDisplay}</td>
         <td style="font-size: 0.85rem; color: var(--text-gray);">${regDate}</td>
+        <td>${actionButtons}</td>
       `;
 
       tbody.appendChild(row);
@@ -220,7 +266,7 @@ async function fetchPlayers() {
     console.error('Players loading error:', error);
     tbody.innerHTML = `
       <tr>
-        <td colspan="8" style="text-align: center; padding: 40px; color: var(--error);">
+        <td colspan="9" style="text-align: center; padding: 40px; color: var(--error);">
           <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
           Error loading registration database directory. Please check server connection.
         </td>
@@ -228,6 +274,37 @@ async function fetchPlayers() {
     `;
   }
 }
+
+// Update player payment status (Approve as Paid, or Reject as Failed)
+async function changePlayerStatus(id, newStatus) {
+  const confirmMsg = newStatus === 'Paid'
+    ? 'Are you sure you want to APPROVE this registration as Paid?'
+    : 'Are you sure you want to REJECT this registration?';
+
+  if (!confirm(confirmMsg)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/players/${id}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Failed to update player status.');
+    }
+
+    showAdminToast(`Registration status updated to ${newStatus}.`);
+    fetchStats();
+    fetchPlayers();
+  } catch (err) {
+    showAdminToast(err.message, 'error');
+  }
+}
+window.changePlayerStatus = changePlayerStatus;
 
 // Utility to get FontAwesome icon class per player role
 function getRoleIcon(role) {

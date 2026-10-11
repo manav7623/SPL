@@ -166,12 +166,8 @@ function initFormHandler() {
         throw new Error(orderData.error || 'Failed to create order');
       }
 
-      // Step 2: Proceed with Payment depending on Mode
-      if (orderData.isMock) {
-        launchMockPayment(orderData.orderId, name, mobile, playing_role, tshirt_size, tshirt_number, tshirt_name);
-      } else {
-        launchRazorpayPayment(orderData, name, mobile, playing_role, tshirt_size, tshirt_number, tshirt_name);
-      }
+      // Step 2: Open Direct UPI Payment Modal
+      launchUpiPayment(orderData, name, mobile, playing_role, tshirt_size, tshirt_number, tshirt_name);
 
     } catch (err) {
       console.error(err);
@@ -185,22 +181,71 @@ function initFormHandler() {
     submitBtn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Pay ₹500 & Register';
   }
 
-  // Launch real Razorpay Checkout popup
-  function launchRazorpayPayment(orderData, name, mobile, role, size, tshirtNo, tshirtName) {
-    const options = {
-      key: orderData.keyId,
-      amount: orderData.amount,
-      currency: 'INR',
-      name: 'SPL 2026',
-      description: 'Player Entry & kit Registration Fee',
-      image: 'https://placehold.co/100x100/12d36d/070f0b?text=SPL',
-      order_id: orderData.orderId,
-      handler: function (response) {
-        // Send payment response to backend verification
-        verifyPayment({
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_signature: response.razorpay_signature,
+  // Launch Direct UPI Payment Gateway Dialog
+  function launchUpiPayment(orderData, name, mobile, role, size, tshirtNo, tshirtName) {
+    const backdrop = document.getElementById('mock-payment-backdrop');
+    const qrImage = document.getElementById('upi-qr-image');
+    const upiIdText = document.getElementById('upi-id-text');
+    const upiIntentLink = document.getElementById('upi-intent-link');
+    const copyBtn = document.getElementById('copy-upi-btn');
+    const utrInput = document.getElementById('utr-input');
+    const submitUtrBtn = document.getElementById('submit-utr-btn');
+    const cancelBtn = document.getElementById('mock-pay-cancel');
+    const cancelBtn2 = document.getElementById('mock-pay-cancel-btn');
+
+    const upiId = orderData.upiId || 'dhameliyamanav-2@okicici';
+    const upiName = orderData.upiName || 'SPL 2026';
+    const orderId = orderData.orderId;
+
+    // Generate dynamic UPI standard transaction URI
+    const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=500.00&cu=INR&tn=${encodeURIComponent('SPL2026_' + orderId)}`;
+
+    qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}`;
+    upiIdText.innerText = upiId;
+    upiIntentLink.href = upiUri;
+    utrInput.value = '';
+
+    backdrop.classList.add('show');
+
+    // Copy UPI ID handler
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(upiId).then(() => {
+        copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        setTimeout(() => {
+          copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        }, 2000);
+      }).catch(() => {
+        showToast('UPI ID: ' + upiId, 'success');
+      });
+    };
+
+    // Close / Cancel handlers
+    const closeModal = () => {
+      backdrop.classList.remove('show');
+      resetSubmitButton();
+    };
+
+    cancelBtn.onclick = closeModal;
+    if (cancelBtn2) cancelBtn2.onclick = closeModal;
+
+    // Submit UTR handler
+    submitUtrBtn.onclick = async () => {
+      const utrVal = utrInput.value.trim();
+      if (!utrVal || utrVal.length < 6) {
+        showToast('Please enter a valid 12-digit UPI Reference / UTR Number.', 'error');
+        utrInput.focus();
+        return;
+      }
+
+      submitUtrBtn.disabled = true;
+      submitUtrBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
+
+      try {
+        await verifyPayment({
+          orderId,
+          utrNumber: utrVal,
+          razorpay_order_id: orderId,
+          razorpay_payment_id: utrVal,
           name,
           mobile,
           role,
@@ -208,80 +253,12 @@ function initFormHandler() {
           tshirtNo,
           tshirtName
         });
-      },
-      prefill: {
-        name: name,
-        contact: mobile
-      },
-      notes: {
-        playing_role: role,
-        tshirt_details: `Size: ${size}, Name: ${tshirtName}, No: ${tshirtNo}`
-      },
-      theme: {
-        color: '#12d36d' // Primary Grass Green
-      },
-      modal: {
-        ondismiss: function () {
-          showToast('Payment cancelled by user.', 'error');
-          resetSubmitButton();
-        }
+        backdrop.classList.remove('show');
+      } catch (err) {
+        submitUtrBtn.disabled = false;
+        submitUtrBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Submit & Complete Registration';
       }
     };
-
-    const rzp = new Razorpay(options);
-    rzp.open();
-  }
-
-  // Launch Simulated (Mock) checkout dialog
-  function launchMockPayment(orderId, name, mobile, role, size, tshirtNo, tshirtName) {
-    const backdrop = document.getElementById('mock-payment-backdrop');
-    const displayOrderId = document.getElementById('mock-order-id');
-    const btnSuccess = document.getElementById('mock-pay-success');
-    const btnFail = document.getElementById('mock-pay-fail');
-    const btnCancel = document.getElementById('mock-pay-cancel');
-
-    displayOrderId.innerText = orderId;
-    backdrop.classList.add('show');
-
-    // Remove old listeners to avoid multiple attachments
-    const newBtnSuccess = btnSuccess.cloneNode(true);
-    const newBtnFail = btnFail.cloneNode(true);
-    const newBtnCancel = btnCancel.cloneNode(true);
-    
-    btnSuccess.replaceWith(newBtnSuccess);
-    btnFail.replaceWith(newBtnFail);
-    btnCancel.replaceWith(newBtnCancel);
-
-    // Mock signature verification parameters
-    newBtnSuccess.addEventListener('click', () => {
-      backdrop.classList.remove('show');
-      const mockPayId = `pay_mock_${Math.random().toString(36).substr(2, 9)}`;
-      const mockSignature = `sig_mock_${Math.random().toString(36).substr(2, 12)}`;
-
-      verifyPayment({
-        razorpay_order_id: orderId,
-        razorpay_payment_id: mockPayId,
-        razorpay_signature: mockSignature,
-        name,
-        mobile,
-        role,
-        size,
-        tshirtNo,
-        tshirtName
-      });
-    });
-
-    newBtnFail.addEventListener('click', () => {
-      backdrop.classList.remove('show');
-      showToast('Payment declined by bank simulation.', 'error');
-      resetSubmitButton();
-    });
-
-    newBtnCancel.addEventListener('click', () => {
-      backdrop.classList.remove('show');
-      showToast('Checkout session aborted.', 'error');
-      resetSubmitButton();
-    });
   }
 
   // Verify payment on server
@@ -291,9 +268,10 @@ function initFormHandler() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          orderId: paymentDetails.orderId,
+          utrNumber: paymentDetails.utrNumber,
           razorpay_order_id: paymentDetails.razorpay_order_id,
-          razorpay_payment_id: paymentDetails.razorpay_payment_id,
-          razorpay_signature: paymentDetails.razorpay_signature
+          razorpay_payment_id: paymentDetails.razorpay_payment_id
         })
       });
 
@@ -309,8 +287,9 @@ function initFormHandler() {
 
     } catch (error) {
       console.error(error);
-      showToast(error.message || 'Payment confirmation failed. Check console for details.', 'error');
+      showToast(error.message || 'Payment confirmation failed. Check details.', 'error');
       resetSubmitButton();
+      throw error;
     }
   }
 

@@ -89,61 +89,27 @@ app.post('/api/register/order', async (req, res) => {
     }
 
     const registrationFee = 500.0; // ₹500
-    const registrationFeePaise = registrationFee * 100; // ₹500 in paise
+    const orderId = `order_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
 
-    if (useMockPayment || !razorpay) {
-      // Mock payment order creation
-      const mockOrderId = `order_mock_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
-      
-      // Save pending registration in database
-      await db.createRegistration({
-        name,
-        mobile,
-        playing_role,
-        tshirt_size,
-        tshirt_number,
-        tshirt_name,
-        amount: registrationFee,
-        razorpay_order_id: mockOrderId
-      });
+    // Save pending registration in database
+    await db.createRegistration({
+      name,
+      mobile,
+      playing_role,
+      tshirt_size,
+      tshirt_number,
+      tshirt_name,
+      amount: registrationFee,
+      razorpay_order_id: orderId
+    });
 
-      return res.json({
-        success: true,
-        isMock: true,
-        orderId: mockOrderId,
-        amount: registrationFeePaise,
-        keyId: 'mock_key_id'
-      });
-    } else {
-      // Create real Razorpay order
-      const options = {
-        amount: registrationFeePaise,
-        currency: 'INR',
-        receipt: `receipt_spl_${Date.now()}`
-      };
-
-      const order = await razorpay.orders.create(options);
-
-      // Save pending registration in database
-      await db.createRegistration({
-        name,
-        mobile,
-        playing_role,
-        tshirt_size,
-        tshirt_number,
-        tshirt_name,
-        amount: registrationFee,
-        razorpay_order_id: order.id
-      });
-
-      return res.json({
-        success: true,
-        isMock: false,
-        orderId: order.id,
-        amount: order.amount,
-        keyId: process.env.RAZORPAY_KEY_ID
-      });
-    }
+    return res.json({
+      success: true,
+      orderId: orderId,
+      amount: registrationFee,
+      upiId: process.env.UPI_ID || 'dhameliyamanav-2@okicici',
+      upiName: process.env.UPI_NAME || 'Manav Dhameliya (SPL 2026)'
+    });
   } catch (error) {
     console.error('Error creating registration order:', error);
     res.status(500).json({ error: 'Failed to initiate registration. Please try again.' });
@@ -151,54 +117,30 @@ app.post('/api/register/order', async (req, res) => {
 });
 
 /**
- * Endpoint to verify Razorpay signature and finalize registration
+ * Endpoint to verify Direct UPI UTR or Razorpay signature and finalize registration
  */
 app.post('/api/register/verify', async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const orderId = req.body.orderId || req.body.razorpay_order_id;
+    const utrNumber = (req.body.utrNumber || req.body.razorpay_payment_id || '').trim();
 
-    if (!razorpay_order_id || !razorpay_payment_id) {
-      return res.status(400).json({ error: 'Missing payment signature details.' });
+    if (!orderId || !utrNumber) {
+      return res.status(400).json({ error: 'Order ID and UPI Reference / UTR Number are required.' });
     }
 
-    const isMockOrder = razorpay_order_id.startsWith('order_mock_');
-
-    if (isMockOrder) {
-      // Verify mock order - always confirm
-      const mockSignature = razorpay_signature || `sig_mock_${crypto.randomBytes(8).toString('hex')}`;
-      const registration = await db.confirmPayment(razorpay_order_id, razorpay_payment_id, mockSignature);
-      return res.json({
-        success: true,
-        registrationId: registration.registration_id,
-        message: 'Registration successful! Payment verified.'
-      });
-    } else {
-      // Verify real Razorpay signature
-      if (!razorpay_signature) {
-        return res.status(400).json({ error: 'Missing Razorpay signature' });
-      }
-
-      const text = razorpay_order_id + '|' + razorpay_payment_id;
-      const generated_signature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-        .update(text)
-        .digest('hex');
-
-      if (generated_signature === razorpay_signature) {
-        const registration = await db.confirmPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
-        return res.json({
-          success: true,
-          registrationId: registration.registration_id,
-          message: 'Registration successful! Payment verified.'
-        });
-      } else {
-        await db.failPayment(razorpay_order_id, 'Signature mismatch');
-        return res.status(400).json({ error: 'Payment signature verification failed.' });
-      }
+    if (utrNumber.length < 6) {
+      return res.status(400).json({ error: 'Please enter a valid UPI Transaction ID / UTR Number.' });
     }
+
+    const registration = await db.confirmPayment(orderId, utrNumber, 'UPI_DIRECT', utrNumber);
+    return res.json({
+      success: true,
+      registrationId: registration.registration_id,
+      message: 'Registration successful! Payment verified.'
+    });
   } catch (error) {
     console.error('Error verifying payment:', error);
-    res.status(500).json({ error: 'Payment verification failed. Contact organizers if money was debited.' });
+    res.status(400).json({ error: error.message || 'Payment verification failed.' });
   }
 });
 
@@ -284,6 +226,21 @@ app.get('/api/admin/players', requireAdmin, async (req, res) => {
 });
 
 /**
+ * Update player payment status (Approve as Paid, or Reject as Failed)
+ */
+app.post('/api/admin/players/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const updated = await db.updateRegistrationStatus(id, status);
+    res.json({ success: true, updated });
+  } catch (error) {
+    console.error('Error updating player status:', error);
+    res.status(400).json({ error: error.message || 'Failed to update player status.' });
+  }
+});
+
+/**
  * Export all registrations to an Excel spreadsheet
  */
 app.get('/api/admin/export', requireAdmin, async (req, res) => {
@@ -301,6 +258,7 @@ app.get('/api/admin/export', requireAdmin, async (req, res) => {
         tshirt_number: '7',
         tshirt_name: 'DHONI',
         amount: 500.0,
+        utr_number: 'N/A',
         payment_status: 'Paid',
         razorpay_payment_id: 'pay_mock_12345',
         created_at: new Date().toISOString()
@@ -318,7 +276,7 @@ app.get('/api/admin/export', requireAdmin, async (req, res) => {
       'T-Shirt Name': reg.tshirt_name,
       'Fee Paid (₹)': reg.amount,
       'Payment Status': reg.payment_status,
-      'Razorpay Payment ID': reg.razorpay_payment_id || 'N/A',
+      'UPI UTR Number': reg.utr_number || reg.razorpay_payment_id || 'N/A',
       'Registration Date': new Date(reg.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
     }));
 
