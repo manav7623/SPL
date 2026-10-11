@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 
 // Setup MySQL Connection Pool using environment variables
-const pool = mysql.createPool({
+const poolConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
@@ -12,7 +12,16 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0
-});
+};
+
+// Cloud MySQL (Aiven, PlanetScale, AWS RDS) SSL configuration
+if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'REQUIRED') {
+  poolConfig.ssl = {
+    rejectUnauthorized: false
+  };
+}
+
+const pool = mysql.createPool(poolConfig);
 
 /**
  * Initializes and verifies MySQL database connection & ensures table schema exists

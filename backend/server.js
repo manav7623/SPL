@@ -9,6 +9,9 @@ const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxy in production environments (Render, Vercel, etc.)
+app.set('trust proxy', 1);
+
 // Setup Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -362,3 +365,5 @@ db.connectDB().then(() => {
 }).catch(err => {
   console.error('Failed to connect to MySQL database, server not started:', err.message);
 });
+
+module.exports = app;
