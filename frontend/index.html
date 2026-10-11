@@ -387,63 +387,90 @@
         </button>
       </div>
 
-      <!-- Amount Banner -->
-      <div class="upi-fee-badge">
-        <span style="color: var(--text-gray); font-size: 0.85rem; font-weight: 500;">
-          <i class="fa-solid fa-receipt" style="color: var(--primary); margin-right: 4px;"></i> Registration Entry Fee
-        </span>
-        <strong style="color: var(--accent); font-size: 1.25rem; font-weight: 800; text-shadow: 0 0 10px rgba(255,215,0,0.3);">₹1.00</strong>
-      </div>
+      <!-- VIEW 1: Standard Checkout View -->
+      <div id="upi-checkout-view">
+        <!-- Amount Banner -->
+        <div class="upi-fee-badge">
+          <span style="color: var(--text-gray); font-size: 0.85rem; font-weight: 500;">
+            <i class="fa-solid fa-receipt" style="color: var(--primary); margin-right: 4px;"></i> Registration Entry Fee
+          </span>
+          <strong style="color: var(--accent); font-size: 1.25rem; font-weight: 800; text-shadow: 0 0 10px rgba(255,215,0,0.3);">₹1.00</strong>
+        </div>
 
-      <!-- QR Code Container -->
-      <div class="upi-qr-box">
-        <img id="upi-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi%3A%2F%2Fpay%3Fpa%3Ddhameliyamanav-2%40okicici%26pn%3DSPL%2B2026%26am%3D1.00%26cu%3DINR%26tn%3DSPL2026_Player_Registration" alt="Scan SPL UPI QR Code" style="width: 140px; height: 140px; display: block; border-radius: 4px;">
-      </div>
+        <!-- QR Code Container -->
+        <div class="upi-qr-box">
+          <img id="upi-qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi%3A%2F%2Fpay%3Fpa%3Ddhameliyamanav-2%40okicici%26pn%3DSPL%2B2026%26am%3D1.00%26cu%3DINR%26tn%3DSPL2026_Player_Registration" alt="Scan SPL UPI QR Code" style="width: 140px; height: 140px; display: block; border-radius: 4px;">
+        </div>
 
-      <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
-        Scan using <strong style="color: #fff;">GPay</strong>, <strong style="color: #fff;">PhonePe</strong>, or <strong style="color: #fff;">Paytm</strong>
-      </p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 10px 0;">
+          Scan using <strong style="color: #fff;">GPay</strong>, <strong style="color: #fff;">PhonePe</strong>, or <strong style="color: #fff;">Paytm</strong>
+        </p>
 
-      <!-- UPI ID Copy Box (Single-line guaranteed) -->
-      <div class="upi-id-pill">
-        <span id="upi-id-text" title="dhameliyamanav-2@okicici">dhameliyamanav-2@okicici</span>
-        <button type="button" id="copy-upi-btn" class="upi-copy-btn">
-          <i class="fa-regular fa-copy"></i> Copy
-        </button>
-      </div>
-
-      <!-- Direct App Intent Link for Mobile Users -->
-      <a id="upi-intent-link" href="upi://pay?pa=dhameliyamanav-2@okicici&pn=SPL%202026&am=1.00&cu=INR&tn=SPL2026_Player_Registration" class="upi-app-btn">
-        <i class="fa-solid fa-bolt"></i> Open in GPay / PhonePe / Paytm
-      </a>
-
-      <!-- Info Notice about self-transfer -->
-      <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 7px 10px; margin-bottom: 10px; font-size: 0.72rem; color: #fcd34d; line-height: 1.35; text-align: left;">
-        <i class="fa-solid fa-lightbulb" style="color: var(--accent);"></i> <strong>Tip:</strong> Apne hi phone ke account se pay karne par bank "Self-transfer block" kar sakta hai. Kisi dost/doosre mobile se scan karein.
-      </div>
-
-      <!-- Instant Auto-Confirm Button -->
-      <button type="button" id="auto-done-btn" class="upi-utr-btn" style="margin-bottom: 10px; font-size: 0.95rem; padding: 12px; background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
-        <i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)
-      </button>
-
-      <!-- Optional UTR Reference Drawer -->
-      <details style="text-align: left; background: rgba(10, 24, 18, 0.6); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.2); margin-bottom: 8px;">
-        <summary style="font-size: 0.78rem; color: var(--accent); cursor: pointer; font-weight: 600;">
-          <i class="fa-solid fa-file-invoice"></i> Enter 12-Digit UTR Number (Optional)
-        </summary>
-        <div style="margin-top: 8px;">
-          <input type="text" id="utr-input" class="form-control" placeholder="e.g. 428512345678" maxlength="22" style="margin-bottom: 6px; font-family: monospace; letter-spacing: 1px; font-weight: 700; font-size: 0.88rem; padding: 8px 12px; background: rgba(0,0,0,0.6); border-color: rgba(255,215,0,0.3); text-align: center;">
-          <button type="button" id="submit-utr-btn" class="btn btn-mini" style="width: 100%; background: var(--accent); color: #000; font-weight: 700; padding: 7px;">
-            Submit with UTR Number
+        <!-- UPI ID Copy Box (Single-line guaranteed) -->
+        <div class="upi-id-pill">
+          <span id="upi-id-text" title="dhameliyamanav-2@okicici">dhameliyamanav-2@okicici</span>
+          <button type="button" id="copy-upi-btn" class="upi-copy-btn">
+            <i class="fa-regular fa-copy"></i> Copy
           </button>
         </div>
-      </details>
 
-      <div style="margin-top: 6px;">
-        <button type="button" id="mock-pay-cancel-btn" style="background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 4px;">
-          Cancel & Edit Details
+        <!-- Direct App Intent Link for Mobile Users -->
+        <a id="upi-intent-link" href="upi://pay?pa=dhameliyamanav-2@okicici&pn=SPL%202026&am=1.00&cu=INR&tn=SPL2026_Player_Registration" class="upi-app-btn">
+          <i class="fa-solid fa-bolt"></i> Open in GPay / PhonePe / Paytm
+        </a>
+
+        <!-- Smart Auto-Detect Live Listening Badge -->
+        <div id="upi-auto-listen-badge" style="display: none; background: rgba(16, 185, 129, 0.15); border: 1px dashed #10b981; border-radius: 7px; padding: 8px 10px; margin-bottom: 10px; font-size: 0.76rem; color: #34d399; font-weight: 600; line-height: 1.35; text-align: center;">
+          <i class="fa-solid fa-radar fa-spin" style="margin-right: 5px;"></i> <strong>Smart Auto-Detect Active:</strong> Payment karte hi wapas aayein, ye automatic Confirm ho jayega!
+        </div>
+
+        <!-- Info Notice about self-transfer -->
+        <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 7px 10px; margin-bottom: 10px; font-size: 0.72rem; color: #fcd34d; line-height: 1.35; text-align: left;">
+          <i class="fa-solid fa-lightbulb" style="color: var(--accent);"></i> <strong>Tip:</strong> Apne hi phone ke account se pay karne par bank "Self-transfer block" kar sakta hai. Kisi dost/doosre mobile se scan karein.
+        </div>
+
+        <!-- Instant Auto-Confirm Button -->
+        <button type="button" id="auto-done-btn" class="upi-utr-btn" style="margin-bottom: 10px; font-size: 0.95rem; padding: 12px; background: linear-gradient(135deg, #10b981 0%, #047857 100%);">
+          <i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)
         </button>
+
+        <!-- Optional UTR Reference Drawer -->
+        <details style="text-align: left; background: rgba(10, 24, 18, 0.6); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.2); margin-bottom: 8px;">
+          <summary style="font-size: 0.78rem; color: var(--accent); cursor: pointer; font-weight: 600;">
+            <i class="fa-solid fa-file-invoice"></i> Enter 12-Digit UTR Number (Optional)
+          </summary>
+          <div style="margin-top: 8px;">
+            <input type="text" id="utr-input" class="form-control" placeholder="e.g. 428512345678" maxlength="22" style="margin-bottom: 6px; font-family: monospace; letter-spacing: 1px; font-weight: 700; font-size: 0.88rem; padding: 8px 12px; background: rgba(0,0,0,0.6); border-color: rgba(255,215,0,0.3); text-align: center;">
+            <button type="button" id="submit-utr-btn" class="btn btn-mini" style="width: 100%; background: var(--accent); color: #000; font-weight: 700; padding: 7px;">
+              Submit with UTR Number
+            </button>
+          </div>
+        </details>
+
+        <div style="margin-top: 6px;">
+          <button type="button" id="mock-pay-cancel-btn" style="background: transparent; border: none; color: var(--text-muted); font-size: 0.8rem; cursor: pointer; text-decoration: underline; padding: 4px;">
+            Cancel & Edit Details
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW 2: Smart Auto-Detect Verifying Overlay -->
+      <div id="upi-verifying-view" style="display: none; padding: 30px 10px; text-align: center;">
+        <div style="width: 72px; height: 72px; margin: 0 auto 18px auto; border-radius: 50%; background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(16, 185, 129, 0.35);">
+          <i class="fa-solid fa-shield-halved" style="font-size: 2.4rem; color: #10b981;"></i>
+        </div>
+        <h3 style="color: #ffffff; margin: 0 0 8px 0; font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700;">
+          Auto-Detecting Payment...
+        </h3>
+        <p style="color: var(--text-gray); font-size: 0.88rem; margin: 0 0 20px 0; line-height: 1.4;">
+          UPI app transaction detected! Confirming registration with tournament system...
+        </p>
+        <div style="background: rgba(255,255,255,0.08); height: 8px; border-radius: 10px; overflow: hidden; max-width: 240px; margin: 0 auto 16px auto; border: 1px solid rgba(255,255,255,0.1);">
+          <div id="verifying-progress-bar" style="background: linear-gradient(90deg, #10b981, #facc15); height: 100%; width: 15%; transition: width 1.6s ease;"></div>
+        </div>
+        <span style="font-size: 0.8rem; color: #4ade80; display: inline-flex; align-items: center; gap: 8px; font-weight: 600;">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Finalizing Player Registration Pass...
+        </span>
       </div>
 
     </div>

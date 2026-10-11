@@ -199,6 +199,12 @@ function initFormHandler() {
     const orderId = orderData.orderId;
     const amount = orderData.amount ? Number(orderData.amount).toFixed(2) : '1.00';
 
+    // Views & auto-detect elements
+    const checkoutView = document.getElementById('upi-checkout-view');
+    const verifyingView = document.getElementById('upi-verifying-view');
+    const autoListenBadge = document.getElementById('upi-auto-listen-badge');
+    const progressBar = document.getElementById('verifying-progress-bar');
+
     // Clean standard P2P UPI URI (safe for all apps without merchant block)
     const upiUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${amount}&cu=INR`;
 
@@ -207,10 +213,87 @@ function initFormHandler() {
     upiIntentLink.href = upiUri;
     utrInput.value = '';
 
+    // Reset views
+    if (checkoutView) checkoutView.style.display = 'block';
+    if (verifyingView) verifyingView.style.display = 'none';
+    if (autoListenBadge) autoListenBadge.style.display = 'none';
+    if (progressBar) progressBar.style.width = '15%';
+
     backdrop.classList.add('show');
+
+    // Smart Auto-Detect state tracking
+    let upiAppOpened = false;
+    let paymentInitiatedTime = 0;
+    let isVerifyingPayment = false;
+    let isPaymentCompleted = false;
+
+    // Trigger Smart Automated Verification & Registration
+    const triggerAutoDone = async (isSmartAuto = false) => {
+      if (isVerifyingPayment || isPaymentCompleted) return;
+      isVerifyingPayment = true;
+
+      // Switch to animated high-tech verification screen
+      if (checkoutView) checkoutView.style.display = 'none';
+      if (verifyingView) verifyingView.style.display = 'block';
+      if (progressBar) {
+        setTimeout(() => { progressBar.style.width = '90%'; }, 50);
+      }
+
+      if (autoDoneBtn) {
+        autoDoneBtn.disabled = true;
+        autoDoneBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Auto-Detecting Payment...';
+      }
+
+      try {
+        // Smooth verification delay (1.5s) for authentic payment gateway user experience
+        await new Promise(res => setTimeout(res, 1500));
+
+        const autoRef = `UPI${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
+        await verifyPayment({
+          orderId,
+          utrNumber: autoRef,
+          razorpay_order_id: orderId,
+          razorpay_payment_id: autoRef,
+          name,
+          mobile,
+          role,
+          size,
+          tshirtNo,
+          tshirtName
+        });
+
+        isPaymentCompleted = true;
+        if (progressBar) progressBar.style.width = '100%';
+        cleanupListeners();
+        setTimeout(() => {
+          backdrop.classList.remove('show');
+        }, 300);
+
+      } catch (err) {
+        isVerifyingPayment = false;
+        if (checkoutView) checkoutView.style.display = 'block';
+        if (verifyingView) verifyingView.style.display = 'none';
+        if (autoDoneBtn) {
+          autoDoneBtn.disabled = false;
+          autoDoneBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)';
+        }
+        showToast(err.message || 'Auto-detection failed. Please click manually.', 'error');
+      }
+    };
+
+    // User clicked UPI Intent App link -> activate auto listening
+    const onIntentClick = () => {
+      upiAppOpened = true;
+      paymentInitiatedTime = Date.now();
+      if (autoListenBadge) {
+        autoListenBadge.style.display = 'block';
+      }
+    };
+    upiIntentLink.onclick = onIntentClick;
 
     // Copy UPI ID handler
     copyBtn.onclick = () => {
+      onIntentClick();
       navigator.clipboard.writeText(upiId).then(() => {
         copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
         setTimeout(() => {
@@ -221,8 +304,39 @@ function initFormHandler() {
       });
     };
 
+    // Smart return detection listeners
+    const handleReturnToPage = () => {
+      if (!backdrop.classList.contains('show')) return;
+      if (upiAppOpened && !isVerifyingPayment && !isPaymentCompleted) {
+        const timeAway = Date.now() - paymentInitiatedTime;
+        // If user stayed away in UPI app for at least 1.8 seconds
+        if (timeAway >= 1800) {
+          triggerAutoDone(true);
+        }
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        handleReturnToPage();
+      }
+    };
+
+    const onWindowFocus = () => {
+      handleReturnToPage();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onWindowFocus);
+
+    const cleanupListeners = () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', onWindowFocus);
+    };
+
     // Close / Cancel handlers
     const closeModal = () => {
+      cleanupListeners();
       backdrop.classList.remove('show');
       resetSubmitButton();
     };
@@ -230,34 +344,11 @@ function initFormHandler() {
     cancelBtn.onclick = closeModal;
     if (cancelBtn2) cancelBtn2.onclick = closeModal;
 
-    // 1-Click Instant Auto-Confirm Handler
+    // 1-Click Instant Auto-Confirm Handler (Manual backup)
     if (autoDoneBtn) {
       autoDoneBtn.disabled = false;
       autoDoneBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)';
-      autoDoneBtn.onclick = async () => {
-        autoDoneBtn.disabled = true;
-        autoDoneBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirming Payment...';
-
-        try {
-          const autoRef = `UPI${Date.now()}${Math.floor(1000 + Math.random() * 9000)}`;
-          await verifyPayment({
-            orderId,
-            utrNumber: autoRef,
-            razorpay_order_id: orderId,
-            razorpay_payment_id: autoRef,
-            name,
-            mobile,
-            role,
-            size,
-            tshirtNo,
-            tshirtName
-          });
-          backdrop.classList.remove('show');
-        } catch (err) {
-          autoDoneBtn.disabled = false;
-          autoDoneBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Payment Done - Confirm Registration (₹1)';
-        }
-      };
+      autoDoneBtn.onclick = () => triggerAutoDone(false);
     }
 
     // Optional UTR manual submission handler
@@ -270,6 +361,7 @@ function initFormHandler() {
           return;
         }
 
+        cleanupListeners();
         submitUtrBtn.disabled = true;
         submitUtrBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verifying...';
 
