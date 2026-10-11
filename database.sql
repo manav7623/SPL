@@ -1,5 +1,5 @@
 -- =========================================================
--- SPL 2026 (Saurashtra Premier League) MySQL Database Schema
+-- SPL 2026 (Shampara Premier League) MySQL Database Schema
 -- Compatible with XAMPP MySQL & phpMyAdmin
 -- =========================================================
 

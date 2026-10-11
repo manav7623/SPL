@@ -1,4 +1,4 @@
-# 🏏 SPL 2026 - Saurashtra Premier League Registration Portal
+# 🏏 SPL 2026 - Shampara Premier League Registration Portal
 
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-5.x-blue.svg)](https://expressjs.com/)
@@ -6,7 +6,7 @@
 [![Deploy on Render](https://img.shields.io/badge/Deploy-Render-46E3B7.svg)](https://render.com/)
 [![Deploy with Vercel](https://img.shields.io/badge/Deploy-Vercel-black.svg)](https://vercel.com/)
 
-A modern, full-stack Player Registration and Admin Tournament Management Portal built for the **Saurashtra Premier League (SPL 2026)**.
+A modern, full-stack Player Registration and Admin Tournament Management Portal built for the **Shampara Premier League (SPL 2026)**.
 
 ---
 
