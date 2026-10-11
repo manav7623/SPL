@@ -360,17 +360,19 @@ app.get('/api/admin/export', requireAdmin, async (req, res) => {
   }
 });
 
-// Connect to database before starting server
-db.connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`===========================================================`);
-    console.log(` SPL 2026 Registration Server is running on port ${PORT}`);
-    console.log(` Main Site: http://localhost:${PORT}`);
-    console.log(` Admin Panel: http://localhost:${PORT}/admin.html`);
-    console.log(`===========================================================`);
+// Connect to database before starting server (only start listener in standalone Node, not Vercel)
+if (!process.env.VERCEL) {
+  db.connectDB().then(() => {
+    app.listen(PORT, () => {
+      console.log(`===========================================================`);
+      console.log(` SPL 2026 Registration Server is running on port ${PORT}`);
+      console.log(` Main Site: http://localhost:${PORT}`);
+      console.log(` Admin Panel: http://localhost:${PORT}/admin.html`);
+      console.log(`===========================================================`);
+    });
+  }).catch(err => {
+    console.error('Failed to connect to MySQL database, server not started:', err.message);
   });
-}).catch(err => {
-  console.error('Failed to connect to MySQL database, server not started:', err.message);
-});
+}
 
 module.exports = app;

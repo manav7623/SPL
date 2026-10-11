@@ -8,10 +8,11 @@ const poolConfig = {
   database: process.env.DB_NAME || 'spl_2026',
   port: parseInt(process.env.DB_PORT || '3306', 10),
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  connectTimeout: 20000
 };
 
 // Cloud MySQL (Aiven, PlanetScale, AWS RDS) SSL configuration
@@ -23,10 +24,35 @@ if (process.env.DB_SSL === 'true' || process.env.DB_SSL === 'REQUIRED') {
 
 const pool = mysql.createPool(poolConfig);
 
+// Helper to retry queries on transient connection errors
+async function executeWithRetry(fn, retries = 2) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isTransient = err && (
+        err.code === 'ETIMEDOUT' ||
+        err.code === 'PROTOCOL_CONNECTION_LOST' ||
+        err.code === 'ECONNRESET' ||
+        err.code === 'ER_LOCK_WAIT_TIMEOUT'
+      );
+      if (isTransient && attempt < retries - 1) {
+        console.warn(`Database query transient error (${err.code}). Retrying in 400ms...`);
+        await new Promise(res => setTimeout(res, 400));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+let isDbInitialized = false;
+
 /**
  * Initializes and verifies MySQL database connection & ensures table schema exists
  */
 async function connectDB() {
+  if (isDbInitialized) return pool;
   try {
     const connection = await pool.getConnection();
     console.log('Successfully connected to MySQL database.');
@@ -65,6 +91,7 @@ async function connectDB() {
     }
 
     connection.release();
+    isDbInitialized = true;
     return pool;
   } catch (error) {
     console.error('MySQL Connection Error:', error.message);
@@ -198,70 +225,74 @@ async function failPayment(orderId, errorDetails = '') {
  * Gets dashboard metrics summary
  */
 async function getAdminStats() {
-  const [rows] = await pool.query(
-    `SELECT
-      COUNT(*) AS totalRegistrations,
-      SUM(CASE WHEN payment_status = 'Paid' THEN 1 ELSE 0 END) AS paidRegistrations,
-      SUM(CASE WHEN payment_status = 'Pending' THEN 1 ELSE 0 END) AS pendingRegistrations,
-      COALESCE(SUM(CASE WHEN payment_status = 'Paid' THEN amount ELSE 0 END), 0) AS totalCollection
-     FROM registrations`
-  );
+  return await executeWithRetry(async () => {
+    const [rows] = await pool.query(
+      `SELECT
+        COUNT(*) AS totalRegistrations,
+        SUM(CASE WHEN payment_status = 'Paid' THEN 1 ELSE 0 END) AS paidRegistrations,
+        SUM(CASE WHEN payment_status = 'Pending' THEN 1 ELSE 0 END) AS pendingRegistrations,
+        COALESCE(SUM(CASE WHEN payment_status = 'Paid' THEN amount ELSE 0 END), 0) AS totalCollection
+       FROM registrations`
+    );
 
-  const stats = rows[0] || {};
-  return {
-    totalRegistrations: Number(stats.totalRegistrations) || 0,
-    paidRegistrations: Number(stats.paidRegistrations) || 0,
-    pendingRegistrations: Number(stats.pendingRegistrations) || 0,
-    totalCollection: Number(stats.totalCollection) || 0
-  };
+    const stats = rows[0] || {};
+    return {
+      totalRegistrations: Number(stats.totalRegistrations) || 0,
+      paidRegistrations: Number(stats.paidRegistrations) || 0,
+      pendingRegistrations: Number(stats.pendingRegistrations) || 0,
+      totalCollection: Number(stats.totalCollection) || 0
+    };
+  });
 }
 
 /**
  * Gets paginated and filtered list of registrations for admin panel
  */
 async function getRegistrations({ search = '', status = '', role = '', limit = 10, offset = 0 }) {
-  const whereClauses = [];
-  const params = [];
+  return await executeWithRetry(async () => {
+    const whereClauses = [];
+    const params = [];
 
-  if (status) {
-    whereClauses.push('payment_status = ?');
-    params.push(status);
-  }
+    if (status) {
+      whereClauses.push('payment_status = ?');
+      params.push(status);
+    }
 
-  if (role) {
-    whereClauses.push('playing_role = ?');
-    params.push(role);
-  }
+    if (role) {
+      whereClauses.push('playing_role = ?');
+      params.push(role);
+    }
 
-  if (search) {
-    whereClauses.push('(name LIKE ? OR mobile LIKE ? OR registration_id LIKE ? OR tshirt_name LIKE ? OR utr_number LIKE ?)');
-    const searchPattern = `%${search}%`;
-    params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
-  }
+    if (search) {
+      whereClauses.push('(name LIKE ? OR mobile LIKE ? OR registration_id LIKE ? OR tshirt_name LIKE ? OR utr_number LIKE ?)');
+      const searchPattern = `%${search}%`;
+      params.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    }
 
-  const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-  // Get total count matching criteria
-  const [countRows] = await pool.query(
-    `SELECT COUNT(*) AS total FROM registrations ${whereSQL}`,
-    params
-  );
-  const totalCount = countRows[0] ? Number(countRows[0].total) : 0;
+    // Get total count matching criteria
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) AS total FROM registrations ${whereSQL}`,
+      params
+    );
+    const totalCount = countRows[0] ? Number(countRows[0].total) : 0;
 
-  // Safe integers for pagination
-  const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
-  const safeOffset = Math.max(0, parseInt(offset, 10) || 0);
+    // Safe integers for pagination
+    const safeLimit = Math.max(1, parseInt(limit, 10) || 10);
+    const safeOffset = Math.max(0, parseInt(offset, 10) || 0);
 
-  // Fetch paginated players
-  const [players] = await pool.query(
-    `SELECT * FROM registrations ${whereSQL} ORDER BY id DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`,
-    params
-  );
+    // Fetch paginated players
+    const [players] = await pool.query(
+      `SELECT * FROM registrations ${whereSQL} ORDER BY id DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`,
+      params
+    );
 
-  return {
-    players,
-    totalCount
-  };
+    return {
+      players,
+      totalCount
+    };
+  });
 }
 
 /**

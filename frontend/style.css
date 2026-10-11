@@ -384,8 +384,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  opacity: 0.35;
+  filter: grayscale(0.5);
+  cursor: not-allowed !important;
+  pointer-events: none;
   transform: none !important;
   box-shadow: none !important;
 }
